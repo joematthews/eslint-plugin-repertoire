@@ -47,12 +47,20 @@ CI prints a warning on any PR that touches `src/`, `docs/` or `README.md` withou
 
 ## Arming the release pipeline
 
-Two one-time steps, in this order.
+Trusted publishing is configured per package, at a package-scoped endpoint, so **the package has to exist on npm before it can be attached**. `npm trust` does not get around this: against a name npm has never seen it fails with `404 POST /-/package/<name>/trust`. A new package therefore takes one by-hand publish, once, and never again.
 
-**1. Attach the trusted publisher.** `npm trust` configures trusted publishing for a name that has never been published, so the first release goes through CI like every other one -- no by-hand `npm publish`, and no bootstrap token to create and revoke.
+**1. Publish once, by hand.** From a clean `main`, at whatever version it carries:
 
 ```sh
 npm login
+npm publish --access public
+```
+
+This version has no provenance -- that needs the OIDC token only CI holds -- which is why it is a throwaway. Publishing `main` at `0.0.0` keeps it obviously a placeholder and avoids editing the version to do it.
+
+**2. Attach the trusted publisher.** Now that the package exists:
+
+```sh
 npm trust github eslint-plugin-repertoire \
   --file publish.yml \
   --repo joematthews/eslint-plugin-repertoire \
@@ -69,15 +77,23 @@ Each flag has to match the workflow exactly or npm rejects the run with a 404 th
 | `--env` | the `environment:` key in `publish.yml`, which is `release`. Omitting it here while the workflow sets one is the common cause of a rejected publish. |
 | `--allow-publish` | required. Configurations created after 20 May 2026 must name at least one allowed action; older ones defaulted to publish. |
 
-`npm trust` needs an interactive 2FA prompt and cannot be driven by a token, so it is a step at a terminal.
+`npm trust` needs an interactive 2FA prompt and cannot be driven by a token, so it is a step at a terminal. Confirm it took with `npm trust list eslint-plugin-repertoire`, which also needs a one-time password.
 
-**2. Arm the workflow.** The `publish` job is gated on a `PUBLISH_ENABLED` repository variable so pushes to `main` skip it rather than fail while the pipeline is half-built.
+**3. Arm the workflow.** The `publish` job is gated on a `PUBLISH_ENABLED` repository variable so pushes to `main` skip it rather than fail while the pipeline is half-built. Run this from a checkout of the repository, since `gh` reads the remote from git:
 
 ```sh
 gh variable set PUBLISH_ENABLED --body true
 ```
 
-Confirm the trust config with `npm trust list eslint-plugin-repertoire`.
+**4. Release the first real version** through a version-bump PR, as every later one goes. Merging it publishes with provenance, tags the commit and cuts the Release.
+
+**5. Retire the placeholder** once a real version is `latest`:
+
+```sh
+npm deprecate eslint-plugin-repertoire@0.0.0 "bootstrap release, use 0.1.0 or later"
+```
+
+The published record afterwards is one deprecated stub with no provenance, and every version from the first real release onward carrying provenance and a matching GitHub Release.
 
 ## What the pipeline relies on
 
