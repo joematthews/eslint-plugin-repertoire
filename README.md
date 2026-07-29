@@ -57,8 +57,6 @@ src/card.ts
   2:9   error  U+200B (​) is not used in [en]. Remove it           repertoire/no-undeclared-characters
 ```
 
-Nothing here is specific to TypeScript. Point the rule at markdown, JSON, YAML or a framework file and it reads those too.
-
 ## Rules
 
 | rule | fixable | recommended |
