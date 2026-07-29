@@ -1,0 +1,82 @@
+name: CI
+
+# `pull_request` (NOT `pull_request_target`): for fork PRs the workflow runs with a read-only
+# GITHUB_TOKEN and no access to repository secrets, so untrusted PR code cannot exfiltrate secrets
+# or push to the repo. These checks need neither.
+on:
+  pull_request:
+    branches: [main]
+
+# Least privilege: the checks only read the code.
+permissions:
+  contents: read
+
+# Cancel an in-progress run when the PR branch is updated again.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    env:
+      HUSKY: "0" # no git hooks on a CI checkout
+    steps:
+      # Full history: the version-bump reminder below diffs against the base branch.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      # `--ignore-scripts`: do not run install lifecycle scripts from the PR's package.json or its
+      # dependencies on the runner. Everything below resolves its native binaries through
+      # optionalDependencies, so this costs nothing and removes an arbitrary-code-execution path.
+      - run: npm ci --ignore-scripts
+
+      # Runs first: a type error makes every check below it unreliable, and neither ESLint nor
+      # vitest reports one on its own.
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: ESLint
+        run: npm run lint
+
+      - name: Prettier
+        run: npm run format:check
+
+      # src/charsets.json is generated and committed. Regenerate it and fail if the result
+      # differs, which catches a change to extract.ts or to CLDR that was never written back.
+      - name: Generated files are current
+        run: npm run check:generated
+
+      - name: Tests and coverage
+        run: npm run coverage
+
+      # `files` ships dist/, which is gitignored, so a bundler failure would otherwise stay
+      # invisible until publish.
+      - name: Build
+        run: npm run build
+
+      # Advisory only. A PR that changes shipped code without bumping the version will merge
+      # fine, it just will not publish -- this is the reminder, not a gate.
+      #
+      # BASE_REF goes through `env` rather than being interpolated into the script. A branch name
+      # is attacker-controlled on a fork PR, and `${{ github.base_ref }}` written directly into a
+      # `run:` block is expanded before the shell sees it -- so a branch named
+      # `;{echo,aWQK}|{base64,-d}|{bash,-i};echo` would execute. As an environment variable the
+      # shell treats it as a plain string. See GHSA-7x29-qqmq-v6qc.
+      - name: Version bump reminder
+        if: always()
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          git show "origin/$BASE_REF:package.json" > /tmp/base-package.json
+          base=$(node -p "require('/tmp/base-package.json').version")
+          head=$(node -p "require('./package.json').version")
+          if [ "$base" = "$head" ] && ! git diff --quiet "origin/$BASE_REF...HEAD" -- src docs README.md; then
+            echo "::warning::Shipped files changed but the version is still $head. Merging will not publish."
+          fi

@@ -1,0 +1,111 @@
+{
+  "name": "eslint-plugin-repertoire",
+  "version": "0.0.0",
+  "description": "ESLint rule that flags characters outside the languages your project is written in.",
+  "keywords": [
+    "eslint",
+    "eslintplugin",
+    "eslint-plugin",
+    "repertoire",
+    "character-repertoire",
+    "charset",
+    "unicode",
+    "cldr",
+    "i18n",
+    "typography",
+    "em-dash",
+    "curly-quotes",
+    "zero-width"
+  ],
+  "license": "MIT",
+  "author": "Joe Matthews",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/joematthews/eslint-plugin-repertoire.git"
+  },
+  "bugs": {
+    "url": "https://github.com/joematthews/eslint-plugin-repertoire/issues"
+  },
+  "homepage": "https://github.com/joematthews/eslint-plugin-repertoire#readme",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "types": "./dist/index.d.cts",
+  "exports": {
+    ".": {
+      "types": {
+        "import": "./dist/index.d.mts",
+        "require": "./dist/index.d.cts"
+      },
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.cjs"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "docs",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "extract": "tsx extract.ts",
+    "build": "tsdown --format esm --format cjs",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "check": "npm run typecheck && npm run lint && npm run format:check && npm run check:generated && npm run coverage",
+    "check:generated": "npm run extract && npm run docs && git diff --exit-code src/charsets.json docs/rules/no-undeclared-characters.md",
+    "lint": "eslint",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "prepack": "npm run build",
+    "prepare": "husky",
+    "coverage": "vitest run --coverage",
+    "docs": "tsx generate-docs.ts && prettier --write docs/rules/no-undeclared-characters.md"
+  },
+  "lint-staged": {
+    "*": [
+      "prettier --write --ignore-unknown",
+      "eslint --fix --no-warn-ignored"
+    ]
+  },
+  "peerDependencies": {
+    "eslint": ">=9.15"
+  },
+  "devDependencies": {
+    "@angular-eslint/template-parser": "^22.1.0",
+    "@eslint/core": "^1.2.1",
+    "@eslint/js": "^10.0.1",
+    "@eslint/markdown": "^8.0.3",
+    "@html-eslint/parser": "^0.64.0",
+    "@types/node": "^26.1.1",
+    "@vitest/coverage-v8": "^4.1.10",
+    "astro-eslint-parser": "^3.0.0",
+    "cldr-misc-full": "^48.2.0",
+    "eslint": "^10.7.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-parser-plain": "^0.1.1",
+    "eslint-plugin-eslint-plugin": "^7.5.0",
+    "husky": "^9.1.7",
+    "jiti": "^2.7.0",
+    "jsonc-eslint-parser": "^3.1.0",
+    "lint-staged": "^17.2.0",
+    "prettier": "^3.9.6",
+    "svelte": "^5.56.8",
+    "svelte-eslint-parser": "^1.8.0",
+    "tsdown": "^0.22.14",
+    "tsx": "^4.23.1",
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.65.0",
+    "vitest": "^4.1.10",
+    "vue-eslint-parser": "^10.4.1",
+    "yaml-eslint-parser": "^2.1.0"
+  },
+  "module": "./dist/index.mjs",
+  "dependencies": {
+    "gemoji": "^8.1.0"
+  }
+}

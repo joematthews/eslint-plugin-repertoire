@@ -1,0 +1,36 @@
+version: 2
+
+updates:
+  # Actions are pinned to commit SHAs, which is what makes a tag-mutation attack like
+  # tj-actions/changed-files inert here. A pinned SHA never updates itself, so this is what keeps
+  # them current -- without it, pinning trades a supply-chain risk for a staleness one.
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: "chore(actions)"
+    labels:
+      - dependencies
+      - tooling
+
+  - package-ecosystem: npm
+    directory: "/"
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: "chore(deps)"
+    labels:
+      - dependencies
+    groups:
+      # One PR for the lint and build toolchain rather than a dozen. These move together and are
+      # verified by the same `npm run check`.
+      dev-tooling:
+        dependency-type: development
+    ignore:
+      # typescript-eslint declares `peer typescript >=4.8.4 <6.1.0`, so TypeScript 7 cannot be
+      # installed alongside it -- `npm ci` fails to resolve. Minor and patch updates still come
+      # through. Drop this entry once typescript-eslint widens its peer range.
+      - dependency-name: typescript
+        update-types:
+          - version-update:semver-major

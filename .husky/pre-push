@@ -1,0 +1,8 @@
+# The full gate, before anything leaves the machine. Same commands CI runs.
+#
+# `set -e` matters: without it the hook exits with the status of the last command, so a failing
+# check followed by a passing build would let the push through.
+set -e
+
+npm run check
+npm run build
