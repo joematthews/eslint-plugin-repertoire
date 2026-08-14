@@ -358,7 +358,7 @@ describe("addresses are reported but never rewritten", () => {
   );
   untouched("a bare www address", "// www.example.com/a—b\n", js);
 
-  it("still rewrites a word that merely begins like a scheme", () => {
+  it("rewrites a word that merely begins like a scheme", () => {
     expect(linter.verifyAndFix("// http, but — not a link\n", js).output).toBe(
       "// http, but -- not a link\n",
     );
