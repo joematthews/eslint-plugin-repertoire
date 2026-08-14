@@ -61,16 +61,89 @@ jobs:
       - name: Build
         run: npm run build
 
-      # Advisory only. A PR that changes shipped code without bumping the version will merge
-      # fine, it just will not publish -- this is the reminder, not a gate.
+  # What a consumer does, on every Node the plugin claims to support and against the oldest
+  # ESLint it claims to support. The tarball is built once on the development Node, then
+  # installed and run on each supported one, so this measures the package rather than the
+  # toolchain.
+  #
+  # eslint@9.15 is pinned deliberately: it is the peer floor, because the rule uses
+  # meta.defaultOptions, which ESLint added in 9.15. If that floor is ever lowered without
+  # changing the rule, this job is what notices.
+  runtime:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node-version: ["18", "20", "22", "24"]
+    name: runs on node ${{ matrix.node-version }}
+    env:
+      HUSKY: "0"
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - run: npm ci --ignore-scripts
+
+      # `npm pack` runs prepack, which builds. The result is what `npm publish` would upload.
+      - name: Pack
+        run: npm pack --pack-destination /tmp
+
+      # Switch to the Node under test. Nothing below this line touches the toolchain.
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: ${{ matrix.node-version }}
+
+      - name: Install the tarball beside the oldest supported ESLint
+        run: |
+          mkdir -p /tmp/consumer
+          cd /tmp/consumer
+          npm init -y > /dev/null
+          npm pkg set type=module
+          npm install eslint@9.15 /tmp/*.tgz
+
+      # An em dash in a comment is what this rule exists to catch, so a clean run here would
+      # mean the plugin loaded and did nothing. It has to be a comment: string literals are
+      # deliberately exempt, being text a reader sees.
       #
-      # BASE_REF goes through `env` rather than being interpolated into the script. A branch name
-      # is attacker-controlled on a fork PR, and `${{ github.base_ref }}` written directly into a
-      # `run:` block is expanded before the shell sees it -- so a branch named
-      # `;{echo,aWQK}|{base64,-d}|{bash,-i};echo` would execute. As an environment variable the
-      # shell treats it as a plain string. See GHSA-7x29-qqmq-v6qc.
+      # The character is written by node rather than typed here, because this rule lints this
+      # repository's own workflows and an em dash in the YAML would fail its own check.
+      - name: The rule loads and reports
+        run: |
+          cd /tmp/consumer
+          cat > eslint.config.mjs <<'CONFIG'
+          import repertoire from "eslint-plugin-repertoire";
+          export default [repertoire.configs.recommended];
+          CONFIG
+          node -e "require('fs').writeFileSync('sample.js', '// a dash \u2014 in a comment\nconst note = 1;\n')"
+          if npx eslint sample.js; then
+            echo "::error::the rule did not report an em dash on eslint 9.15"
+            exit 1
+          fi
+          echo "reported as expected"
+
+  # Advisory only, and once rather than per Node: a PR that changes shipped code without
+  # bumping the version merges fine, it just will not publish.
+  #
+  # BASE_REF goes through `env` rather than being interpolated into the script. A branch name
+  # is attacker-controlled on a fork PR, and `${{ github.base_ref }}` written directly into a
+  # `run:` block is expanded before the shell sees it. As an environment variable the shell
+  # treats it as a plain string. See GHSA-7x29-qqmq-v6qc.
+  version-reminder:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .nvmrc
+
       - name: Version bump reminder
-        if: always()
         env:
           BASE_REF: ${{ github.base_ref }}
         run: |
