@@ -72,9 +72,9 @@ jobs:
   # installed and run on each supported one, so this measures the package rather than the
   # toolchain.
   #
-  # eslint@9.15 is pinned deliberately: it is the peer floor, because the rule uses
-  # meta.defaultOptions, which ESLint added in 9.15. If that floor is ever lowered without
-  # changing the rule, this job is what notices.
+  # Both floors at once: the oldest supported Node against the oldest supported ESLint.
+  # meta.defaultOptions only applies from 9.15, so the rule merges its own defaults in
+  # create(); if that merge is ever removed, this job is what notices.
   runtime:
     runs-on: ubuntu-latest
     strategy:
@@ -109,7 +109,7 @@ jobs:
           cd /tmp/consumer
           npm init -y > /dev/null
           npm pkg set type=module
-          npm install eslint@9.15 /tmp/*.tgz
+          npm install eslint@8.57 /tmp/*.tgz
 
       # An em dash in a comment is what this rule exists to catch, so a clean run here would
       # mean the plugin loaded and did nothing. It has to be a comment: string literals are
@@ -126,7 +126,7 @@ jobs:
           CONFIG
           node -e "require('fs').writeFileSync('sample.js', '// a dash \u2014 in a comment\nconst note = 1;\n')"
           if npx eslint sample.js; then
-            echo "::error::the rule did not report an em dash on eslint 9.15"
+            echo "::error::the rule did not report an em dash on eslint 8.57"
             exit 1
           fi
           echo "reported as expected"

@@ -23,7 +23,7 @@ const cach‍e = new Map();
 npm install --save-dev eslint-plugin-repertoire
 ```
 
-Requires ESLint 9.15 or later, and Node 18.18 or later.
+Requires ESLint 8.57 or later, and Node 18.18 or later.
 
 ## Usage
 
@@ -50,17 +50,17 @@ Configuration is per file glob, so a file with a wider range than the rest of th
 
 ### The older config format
 
-Flat config is the one to use. An `.eslintrc` still works on ESLint 9 with the escape hatch, naming the rule directly rather than extending the shareable config:
+Flat config is the one to use. An `.eslintrc` works too, naming the rule directly rather than extending the shareable config, which is flat-shaped:
 
 ```jsonc
-// .eslintrc.json, with ESLINT_USE_FLAT_CONFIG=false
+// .eslintrc.json
 {
   "plugins": ["repertoire"],
   "rules": { "repertoire/no-undeclared-characters": "error" },
 }
 ```
 
-ESLint prints a deprecation warning, and [ESLint 10 removed the format entirely](https://eslint.org/blog/2026/02/eslint-v10.0.0-released/) along with the environment variable, so this is a bridge rather than a supported path.
+That runs as-is on ESLint 8, and on ESLint 9 with `ESLINT_USE_FLAT_CONFIG=false` and a deprecation warning. [ESLint 10 removed the format entirely](https://eslint.org/blog/2026/02/eslint-v10.0.0-released/), environment variable included, so treat it as a bridge.
 
 Every report names the character by code point, so two that look alike are told apart, and gives the ASCII form where one exists:
 

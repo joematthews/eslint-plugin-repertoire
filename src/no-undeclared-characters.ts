@@ -12,8 +12,9 @@ type Range = [number, number];
 // CLDR codes this build knows, and the schema's enum of valid `languages`.
 export const LANGUAGES = Object.keys(charsets);
 
-// `meta.defaultOptions`, which ESLint merges user config onto, so create()
-// always receives a complete Options object. Needs ESLint 9.15.
+// Declared as `meta.defaultOptions` and merged again in create(). ESLint applies the meta
+// property from 9.15 and ignores it before that, so the merge is what lets the rule run on
+// an older one. Neither is redundant: the declaration is what tooling reads.
 const DEFAULTS: Options = { languages: ["en"], allow: [] };
 
 // Segment as a reader sees it, so an emoji sequence counts as one character.
@@ -144,6 +145,7 @@ type RepertoireRule = RuleDefinition<
 const rule: RepertoireRule = {
   meta: {
     type: "problem",
+    defaultOptions: [DEFAULTS],
     // Prose is prose whatever the file holds it, so the rule reads every
     // language ESLint can be taught: TypeScript, markdown, JSON, YAML, and a
     // framework template alike.
@@ -179,7 +181,6 @@ const rule: RepertoireRule = {
         additionalProperties: false,
       },
     ],
-    defaultOptions: [DEFAULTS],
     messages: {
       undeclared: "{{name}} is not used in [{{languages}}]",
       undeclaredUse:
@@ -191,7 +192,7 @@ const rule: RepertoireRule = {
   },
 
   create(context) {
-    const [{ languages, allow }] = context.options;
+    const { languages, allow } = { ...DEFAULTS, ...context.options[0] };
 
     const permitted = new Set([...WHITESPACE, ...allow]);
     for (const language of languages) {
@@ -201,7 +202,12 @@ const rule: RepertoireRule = {
       }
     }
 
-    const source = context.sourceCode as unknown as ReadableSource;
+    // `context.sourceCode` from 8.40, `getSourceCode()` before it.
+    const withOlderAccessor = context as unknown as {
+      getSourceCode?: () => unknown;
+    };
+    const source = (context.sourceCode ??
+      withOlderAccessor.getSourceCode?.()) as unknown as ReadableSource;
     const listed = languages.join(", ");
 
     function scan(isMarkdown: boolean): void {
