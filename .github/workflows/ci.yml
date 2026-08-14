@@ -61,6 +61,12 @@ jobs:
       - name: Build
         run: npm run build
 
+      # Checks the tarball rather than the source, which is the only place an exports mistake
+      # exists. This package publishes four entries across two module formats, so there is
+      # more of it to get wrong than most.
+      - name: Package linters
+        run: npm run lint:package
+
   # What a consumer does, on every Node the plugin claims to support and against the oldest
   # ESLint it claims to support. The tarball is built once on the development Node, then
   # installed and run on each supported one, so this measures the package rather than the

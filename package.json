@@ -28,6 +28,7 @@
   },
   "homepage": "https://github.com/joematthews/eslint-plugin-repertoire#readme",
   "type": "module",
+  "sideEffects": false,
   "main": "./dist/index.cjs",
   "types": "./dist/index.d.cts",
   "exports": {
@@ -56,7 +57,7 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "check": "npm run typecheck && npm run lint && npm run format:check && npm run check:generated && npm run coverage",
+    "check": "npm run typecheck && npm run lint && npm run format:check && npm run check:generated && npm run coverage && npm run lint:package",
     "check:generated": "npm run extract && npm run docs && git diff --exit-code src/charsets.json docs/rules/no-undeclared-characters.md",
     "lint": "eslint",
     "format": "prettier --write .",
@@ -64,7 +65,8 @@
     "prepack": "npm run build",
     "prepare": "husky",
     "coverage": "vitest run --coverage",
-    "docs": "tsx generate-docs.ts && prettier --write docs/rules/no-undeclared-characters.md"
+    "docs": "tsx generate-docs.ts && prettier --write docs/rules/no-undeclared-characters.md",
+    "lint:package": "publint"
   },
   "lint-staged": {
     "*": [
@@ -94,6 +96,7 @@
     "jsonc-eslint-parser": "^3.1.0",
     "lint-staged": "^17.2.0",
     "prettier": "^3.9.6",
+    "publint": "^0.3.23",
     "svelte": "^5.56.8",
     "svelte-eslint-parser": "^1.8.0",
     "tsdown": "^0.22.14",
