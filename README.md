@@ -1,6 +1,6 @@
 # eslint-plugin-repertoire
 
-[![npm](https://img.shields.io/npm/v/eslint-plugin-repertoire.svg)](https://www.npmjs.com/package/eslint-plugin-repertoire) [![license](https://img.shields.io/npm/l/eslint-plugin-repertoire.svg)](LICENSE)
+[![npm](https://img.shields.io/npm/v/eslint-plugin-repertoire.svg)](https://www.npmjs.com/package/eslint-plugin-repertoire) [![license](https://img.shields.io/npm/l/eslint-plugin-repertoire.svg)](https://github.com/joematthews/eslint-plugin-repertoire/blob/main/LICENSE)
 
 > **character repertoire** -- the collection of characters included in a character set.
 >
@@ -46,7 +46,7 @@ export default [
 "repertoire/no-undeclared-characters": ["error", { languages: ["de", "pl"] }]
 ```
 
-Configuration is per file glob, so a file with a wider range than the rest of the project -- a changelog carrying contributor names, a translations file -- gets its own entry. See [configuring the rule](docs/rules/no-undeclared-characters.md).
+Configuration is per file glob, so a file with a wider range than the rest of the project -- a changelog carrying contributor names, a translations file -- gets its own entry. See [configuring the rule](https://github.com/joematthews/eslint-plugin-repertoire/blob/main/docs/rules/no-undeclared-characters.md).
 
 ### The older config format
 
@@ -75,7 +75,7 @@ src/card.ts
 
 | rule | fixable | recommended |
 | --- | --- | --- |
-| [`no-undeclared-characters`](docs/rules/no-undeclared-characters.md) | yes | yes |
+| [`no-undeclared-characters`](https://github.com/joematthews/eslint-plugin-repertoire/blob/main/docs/rules/no-undeclared-characters.md) | yes | yes |
 
 ## Character data
 
@@ -83,4 +83,4 @@ Which characters each language is written with comes from [Unicode CLDR](https:/
 
 ## License
 
-[MIT](LICENSE)
+[MIT](https://github.com/joematthews/eslint-plugin-repertoire/blob/main/LICENSE)
