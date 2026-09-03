@@ -10,13 +10,6 @@
 
 You name the languages a file is written in. Characters those languages use are permitted, and the rest are reported.
 
-These two lines declare two different variables:
-
-```js
-const cache = new Map();
-const cach‍e = new Map();
-```
-
 ## Install
 
 ```sh
